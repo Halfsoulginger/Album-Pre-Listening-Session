@@ -23,6 +23,8 @@
     "qrcode": "^1.5.4",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
+    "tsx": "^4.21.0",
+    "typescript": "^7.0.2",
     "vite": "^8.3.0",
     "ws": "^8.22.0"
   },
@@ -36,8 +38,6 @@
     "@types/ws": "^8.18.2",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
-    "tailwindcss": "^4.3.3",
-    "tsx": "^4.21.0",
-    "typescript": "^7.0.2"
+    "tailwindcss": "^4.3.3"
   }
 }
