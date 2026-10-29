@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { RoomState, TrackInfo } from '../types';
 import { Users, Radio, Check, Edit2 } from 'lucide-react';
 
@@ -21,20 +21,28 @@ export const AudienceMobileView: React.FC<AudienceMobileViewProps> = ({
   const [isPressed, setIsPressed] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(nickname);
+  const lastPressTimeRef = useRef(0);
 
   const currentTrack: TrackInfo | undefined =
     room.tracks.find((t) => t.id === room.currentTrackId) || room.tracks[0];
 
-  const handlePress = (e?: React.TouchEvent | React.MouseEvent) => {
-    if (e && 'touches' in e && e.cancelable) {
+  const handlePress = (e?: React.SyntheticEvent) => {
+    if (e && 'cancelable' in e && e.cancelable) {
       e.preventDefault();
     }
+
+    // Debounce to strictly eliminate mobile touch + mouse synthetic double clicks
+    const now = Date.now();
+    if (now - lastPressTimeRef.current < 110) {
+      return;
+    }
+    lastPressTimeRef.current = now;
 
     // Subtle tactile button depression (no vibration, no sound, no floating emojis)
     setIsPressed(true);
     setTimeout(() => setIsPressed(false), 140);
 
-    // Send tap event cleanly
+    // Send single tap event cleanly
     onSendTap('fire');
   };
 
@@ -76,8 +84,7 @@ export const AudienceMobileView: React.FC<AudienceMobileViewProps> = ({
           <div className="absolute -inset-6 rounded-full bg-gradient-to-tr from-orange-600/30 via-red-600/20 to-amber-500/20 blur-2xl pointer-events-none" />
 
           <button
-            onTouchStart={handlePress}
-            onMouseDown={handlePress}
+            onPointerDown={handlePress}
             aria-label="Knopf drücken"
             className={`relative w-64 h-64 rounded-full cursor-pointer transition-all duration-75 touch-manipulation border-4 shadow-2xl active:scale-90 flex items-center justify-center ${
               isPressed

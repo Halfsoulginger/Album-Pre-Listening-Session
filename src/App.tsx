@@ -276,32 +276,6 @@ export default function App() {
   const handleAudienceSendTap = (category = 'fire') => {
     setPersonalTapCount((prev) => prev + 1);
 
-    let calculatedTimestamp = room.playbackState.currentTime;
-    if (room.playbackState.isPlaying) {
-      const elapsed = (Date.now() - room.playbackState.updatedAt) / 1000;
-      calculatedTimestamp += elapsed;
-    }
-    const currentTrack = room.tracks.find((t) => t.id === room.currentTrackId);
-    if (currentTrack && currentTrack.duration > 0) {
-      calculatedTimestamp = Math.min(Math.max(0, calculatedTimestamp), currentTrack.duration);
-    }
-    calculatedTimestamp = Math.round(calculatedTimestamp * 10) / 10;
-
-    const optimisticTap: TapEvent = {
-      id: `tap-opt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      trackId: room.currentTrackId,
-      timestamp: calculatedTimestamp,
-      clientCreatedAt: Date.now(),
-      category,
-      userNickname: nickname,
-      userColor,
-    };
-
-    setRoom((prev) => ({
-      ...prev,
-      taps: [...prev.taps, optimisticTap],
-    }));
-
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(
         JSON.stringify({

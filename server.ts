@@ -144,6 +144,7 @@ interface ClientSocket extends WebSocket {
   nickname?: string;
   userColor?: string;
   isAlive?: boolean;
+  lastTapTime?: number;
 }
 
 // Keepalive ping/pong
@@ -291,6 +292,14 @@ wss.on('connection', (ws: WebSocket) => {
 
         case 'TAP_VIBE': {
           if (!client.roomId) return;
+
+          // Prevent rapid duplicate bounces / network retransmissions
+          const now = Date.now();
+          if (client.lastTapTime && now - client.lastTapTime < 90) {
+            return;
+          }
+          client.lastTapTime = now;
+
           const room = getOrCreateRoom(client.roomId);
 
           // Calculate precise song timestamp
