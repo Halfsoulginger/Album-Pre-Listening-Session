@@ -1,0 +1,6 @@
+{
+  "name": "TOBIJ - Album Listening Party & Heatmap",
+  "description": "Echtzeit-Feedback und SoundCloud-Style Hype-Heatmap für das Album von TOBIJ. Gäste scannen den QR-Code und markieren Lieblingsstellen puristisch per Knopfdruck.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
