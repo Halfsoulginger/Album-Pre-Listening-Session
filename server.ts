@@ -40,6 +40,13 @@ export interface PlaybackState {
   updatedAt: number; // Date.now() timestamp
 }
 
+export interface VoteSubmission {
+  userId: string;
+  nickname: string;
+  trackIds: string[];
+  submittedAt: number;
+}
+
 export interface RoomState {
   roomId: string;
   albumTitle: string;
@@ -49,6 +56,8 @@ export interface RoomState {
   playbackState: PlaybackState;
   taps: TapEvent[];
   activeUsers: number;
+  isVotingActive?: boolean;
+  votes?: VoteSubmission[];
 }
 
 // In-memory room store
@@ -128,6 +137,8 @@ function getOrCreateRoom(roomId: string): RoomState {
       },
       taps: [],
       activeUsers: 0,
+      isVotingActive: false,
+      votes: [],
     };
     rooms.set(roomId, initialRoom);
   }
@@ -357,6 +368,68 @@ wss.on('connection', (ws: WebSocket) => {
             type: 'TAPS_RESET',
             trackId: msg.trackId,
             remainingTaps: room.taps,
+          });
+          break;
+        }
+
+        case 'HOST_SET_VOTING': {
+          if (!client.roomId || client.role !== 'host') return;
+          const room = getOrCreateRoom(client.roomId);
+          room.isVotingActive = Boolean(msg.active);
+
+          broadcastToRoom(client.roomId, {
+            type: 'VOTING_STATE_UPDATE',
+            isVotingActive: room.isVotingActive,
+            votes: room.votes || [],
+          });
+          break;
+        }
+
+        case 'SUBMIT_VOTE': {
+          if (!client.roomId) return;
+          const room = getOrCreateRoom(client.roomId);
+          if (!room.isVotingActive) return;
+
+          // Limit to max 3 valid track IDs
+          const trackIds = Array.isArray(msg.trackIds)
+            ? msg.trackIds.filter((id: string) => room.tracks.some((t) => t.id === id)).slice(0, 3)
+            : [];
+
+          if (!room.votes) room.votes = [];
+
+          // Upsert vote for this user/client
+          const userId = client.userId || client.nickname || 'guest';
+          const existingIdx = room.votes.findIndex((v) => v.userId === userId);
+          const voteItem: VoteSubmission = {
+            userId,
+            nickname: client.nickname || 'Gast',
+            trackIds,
+            submittedAt: Date.now(),
+          };
+
+          if (existingIdx >= 0) {
+            room.votes[existingIdx] = voteItem;
+          } else {
+            room.votes.push(voteItem);
+          }
+
+          broadcastToRoom(client.roomId, {
+            type: 'VOTING_STATE_UPDATE',
+            isVotingActive: room.isVotingActive,
+            votes: room.votes,
+          });
+          break;
+        }
+
+        case 'RESET_VOTES': {
+          if (!client.roomId || client.role !== 'host') return;
+          const room = getOrCreateRoom(client.roomId);
+          room.votes = [];
+
+          broadcastToRoom(client.roomId, {
+            type: 'VOTING_STATE_UPDATE',
+            isVotingActive: room.isVotingActive,
+            votes: [],
           });
           break;
         }

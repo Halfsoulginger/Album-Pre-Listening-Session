@@ -22,6 +22,7 @@ import {
   Radio,
   Music,
   Zap,
+  Trophy,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -32,6 +33,8 @@ interface HostDashboardProps {
   onResetTaps: (trackId?: string) => void;
   onOpenAudienceView: () => void;
   onImportSession?: (taps: any[]) => void;
+  onToggleVoting?: (active: boolean) => void;
+  onResetVotes?: () => void;
 }
 
 export const HostDashboard: React.FC<HostDashboardProps> = ({
@@ -41,6 +44,8 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
   onResetTaps,
   onOpenAudienceView,
   onImportSession,
+  onToggleVoting,
+  onResetVotes,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -392,13 +397,41 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* FAVORITEN-VOTING BUTTON */}
+          <button
+            onClick={() => {
+              const nextState = !room.isVotingActive;
+              onToggleVoting?.(nextState);
+              if (nextState) {
+                confetti({
+                  particleCount: 50,
+                  spread: 60,
+                  origin: { y: 0.1 },
+                  colors: ['#f59e0b', '#f97316', '#ef4444'],
+                });
+              }
+            }}
+            className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 whitespace-nowrap shadow-lg ${
+              room.isVotingActive
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 animate-pulse'
+                : 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:brightness-110 text-white shadow-orange-500/20'
+            }`}
+          >
+            <Trophy className="w-4 h-4" />
+            <span>
+              {room.isVotingActive
+                ? `🟢 Voting aktiv (${room.votes?.length || 0} Stimmen) – Beenden`
+                : '🏆 Favoriten-Voting öffnen'}
+            </span>
+          </button>
+
           <button
             onClick={() => setIsQrModalOpen(true)}
-            className="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-orange-600 to-amber-500 rounded-xl hover:from-orange-500 hover:to-amber-400 transition-all flex items-center gap-2 shadow-lg shadow-orange-600/20 whitespace-nowrap"
+            className="px-3.5 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all flex items-center gap-2 whitespace-nowrap"
           >
-            <QrCode className="w-4 h-4" />
-            <span>QR-Code für Gäste</span>
+            <QrCode className="w-4 h-4 text-orange-400" />
+            <span>QR-Code</span>
           </button>
 
           <button
@@ -415,6 +448,40 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN: Player, Waveform, Hotspots (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
+          {/* LIVE VOTING BANNER FOR HOST */}
+          {room.isVotingActive && (
+            <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-emerald-500/15 border border-orange-500/40 rounded-3xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-orange-500/20 flex items-center justify-center text-orange-400 shrink-0">
+                  <Trophy className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block"></span>
+                    <h3 className="font-bold text-sm text-white">Favoriten-Voting ist geöffnet!</h3>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    Die Gäste wählen auf ihren Handys ihre Top-3 Songs. Bisherige Stimmen: <strong className="text-orange-400 font-mono font-bold">{room.votes?.length || 0}</strong>
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setIsSummaryModalOpen(true)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-amber-300"
+                >
+                  Live-Ergebnisse
+                </button>
+                <button
+                  onClick={() => onToggleVoting?.(false)}
+                  className="px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-xs font-bold text-white"
+                >
+                  Voting schließen
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* PLAYER CARD */}
           <div className="bg-gradient-to-b from-slate-900/90 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
             <div className="flex items-start justify-between mb-4">

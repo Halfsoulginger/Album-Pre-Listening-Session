@@ -24,6 +24,13 @@ export interface PlaybackState {
   updatedAt: number; // Date.now() timestamp
 }
 
+export interface VoteSubmission {
+  userId: string;
+  nickname: string;
+  trackIds: string[];
+  submittedAt: number;
+}
+
 export interface RoomState {
   roomId: string;
   albumTitle: string;
@@ -33,6 +40,8 @@ export interface RoomState {
   playbackState: PlaybackState;
   taps: TapEvent[];
   activeUsers: number;
+  isVotingActive?: boolean;
+  votes?: VoteSubmission[];
 }
 
 export interface HotspotCluster {

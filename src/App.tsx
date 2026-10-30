@@ -158,6 +158,14 @@ export default function App() {
                 taps: data.remainingTaps || [],
               }));
               break;
+
+            case 'VOTING_STATE_UPDATE':
+              setRoom((prev) => ({
+                ...prev,
+                isVotingActive: data.isVotingActive,
+                votes: data.votes || [],
+              }));
+              break;
           }
         } catch (err) {
           console.error('Error parsing WS message:', err);
@@ -272,6 +280,48 @@ export default function App() {
     }));
   };
 
+  // Host toggles voting mode
+  const handleHostToggleVoting = (active: boolean) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'HOST_SET_VOTING',
+          active,
+        })
+      );
+    }
+    setRoom((prev) => ({
+      ...prev,
+      isVotingActive: active,
+    }));
+  };
+
+  const handleHostResetVotes = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'RESET_VOTES',
+        })
+      );
+    }
+    setRoom((prev) => ({
+      ...prev,
+      votes: [],
+    }));
+  };
+
+  // Audience submits favorites vote
+  const handleAudienceSubmitVote = (trackIds: string[]) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'SUBMIT_VOTE',
+          trackIds,
+        })
+      );
+    }
+  };
+
   // Audience sends single vibe tap
   const handleAudienceSendTap = (category = 'fire') => {
     setPersonalTapCount((prev) => prev + 1);
@@ -343,6 +393,8 @@ export default function App() {
           onResetTaps={handleHostResetTaps}
           onOpenAudienceView={() => toggleMode('audience')}
           onImportSession={handleImportSession}
+          onToggleVoting={handleHostToggleVoting}
+          onResetVotes={handleHostResetVotes}
         />
       </div>
 
@@ -354,6 +406,7 @@ export default function App() {
           onUpdateNickname={handleUpdateNickname}
           connectionStatus={connectionStatus}
           personalTapCount={personalTapCount}
+          onSubmitVote={handleAudienceSubmitVote}
         />
       </div>
     </div>
