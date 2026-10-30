@@ -31,6 +31,7 @@ interface HostDashboardProps {
   onUpdateTracks: (tracks: TrackInfo[], albumTitle?: string, artistName?: string, currentTrackId?: string) => void;
   onResetTaps: (trackId?: string) => void;
   onOpenAudienceView: () => void;
+  onImportSession?: (taps: any[]) => void;
 }
 
 export const HostDashboard: React.FC<HostDashboardProps> = ({
@@ -39,6 +40,7 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
   onUpdateTracks,
   onResetTaps,
   onOpenAudienceView,
+  onImportSession,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -778,6 +780,7 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
         onClose={() => setIsSummaryModalOpen(false)}
         room={room}
         onSelectTrack={handleSelectTrack}
+        onImportSession={onImportSession}
       />
     </div>
   );

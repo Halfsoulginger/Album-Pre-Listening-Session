@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { RoomState, TrackInfo, TapEvent } from '../types';
 import { formatTime } from '../utils/waveformExtractor';
-import { X, Award, Flame, Download, BarChart3, Clock, TrendingUp } from 'lucide-react';
+import { X, Award, Flame, Download, BarChart3, Clock, TrendingUp, Upload } from 'lucide-react';
 
 interface AlbumSummaryModalProps {
   isOpen: boolean;
   onClose: () => void;
   room: RoomState;
   onSelectTrack: (trackId: string) => void;
+  onImportSession?: (taps: TapEvent[]) => void;
 }
 
 export const AlbumSummaryModal: React.FC<AlbumSummaryModalProps> = ({
@@ -15,8 +16,30 @@ export const AlbumSummaryModal: React.FC<AlbumSummaryModalProps> = ({
   onClose,
   room,
   onSelectTrack,
+  onImportSession,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   if (!isOpen) return null;
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (Array.isArray(parsed.taps)) {
+          onImportSession?.(parsed.taps);
+        } else if (Array.isArray(parsed)) {
+          onImportSession?.(parsed);
+        }
+      } catch (err) {
+        console.error('Ungültige JSON-Datei', err);
+      }
+    };
+    reader.readAsText(file);
+  };
 
   // Aggregate stats per track
   const trackStats = room.tracks.map((track) => {
@@ -200,12 +223,29 @@ export const AlbumSummaryModal: React.FC<AlbumSummaryModalProps> = ({
           })}
         </div>
 
-        {/* Export Footer */}
-        <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+        {/* Export & Import Footer */}
+        <div className="mt-6 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs text-slate-400">
-            Exportiere die Zeitstempel für Logic, Ableton oder dein Team
+            Exportiere die Zeitstempel oder lade eine frühere Session
           </p>
           <div className="flex items-center gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept=".json"
+              className="hidden"
+            />
+            {onImportSession && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
+                title="Gespeicherte JSON-Datei laden"
+              >
+                <Upload className="w-3.5 h-3.5 text-amber-400" />
+                <span>Session laden</span>
+              </button>
+            )}
             <button
               onClick={exportCSV}
               className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"

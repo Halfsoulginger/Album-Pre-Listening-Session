@@ -298,6 +298,13 @@ export default function App() {
     window.history.pushState({}, '', newUrl.toString());
   };
 
+  const handleImportSession = (importedTaps: TapEvent[]) => {
+    setRoom((prev) => ({
+      ...prev,
+      taps: importedTaps,
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-[#07080c] relative">
       {/* Floating Mode Switcher */}
@@ -335,6 +342,7 @@ export default function App() {
           onUpdateTracks={handleHostUpdateTracks}
           onResetTaps={handleHostResetTaps}
           onOpenAudienceView={() => toggleMode('audience')}
+          onImportSession={handleImportSession}
         />
       </div>
 
